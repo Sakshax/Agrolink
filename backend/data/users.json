@@ -1,0 +1,14 @@
+[
+  {
+    "username": "Krishna",
+    "password": "$2b$10$3Lz9eHvSPMyBmiUDqokq0ussEDd/TZIU9VLMmU.4Q4F4Qdk/Btq22",
+    "role": "Buyer",
+    "_id": "u_1775845523052"
+  },
+  {
+    "username": "Saksham",
+    "password": "$2b$10$1PHrNqkjU/ildM8p8ia.Q.Bg2tMieAJ640yhCKcc.K48fk9/VRF5W",
+    "role": "Farmer",
+    "_id": "u_1775846121603"
+  }
+]

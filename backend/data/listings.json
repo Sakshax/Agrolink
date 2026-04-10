@@ -1,0 +1,52 @@
+[
+  {
+    "_id": "demo1",
+    "cropName": "Wheat",
+    "quantity": 50,
+    "price": 2100,
+    "mandiPrice": 2400,
+    "location": {
+      "coordinates": [
+        77.209,
+        28.6139
+      ]
+    },
+    "status": "Active",
+    "farmerId": {
+      "name": "Ramesh Singh",
+      "rating": 4.8
+    }
+  },
+  {
+    "_id": "demo2",
+    "cropName": "Rice",
+    "quantity": 100,
+    "price": 3200,
+    "mandiPrice": 3000,
+    "location": {
+      "coordinates": [
+        75.8577,
+        22.7196
+      ]
+    },
+    "status": "Active",
+    "farmerId": {
+      "name": "Suresh Kumar",
+      "rating": 4.5
+    }
+  },
+  {
+    "_id": "demo1775847195090",
+    "farmerId": {
+      "name": "Ramesh Singh",
+      "rating": 5
+    },
+    "cropName": "Potato",
+    "quantity": 50,
+    "price": 4000,
+    "mandiPrice": 2200,
+    "location": "Punjab, India",
+    "status": "Active",
+    "createdAt": "2026-04-10T18:53:15.090Z"
+  }
+]

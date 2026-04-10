@@ -57,7 +57,7 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     // Special case for Fixed Admin Credentials
-    if (username === 'Admin' && password === 'admin123') {
+    if (username === 'admin.agrolink@gmail.com' && password === '12345678') {
       console.log(`[Admin] Fixed credentials login detected`);
       return res.status(200).json({ 
         message: 'Admin login successful', 

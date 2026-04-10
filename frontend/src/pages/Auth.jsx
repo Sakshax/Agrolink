@@ -4,7 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, ArrowRight, Wheat, ShoppingBag, Loader2, CheckCircle2 } from 'lucide-react';
 import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlice';
-import axios from 'axios';
+import { auth, db } from '../firebase';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword 
+} from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,8 +20,20 @@ const Auth = () => {
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
 
+  // Helper to map username to email for Firebase Auth
+  const getEmail = (username) => `${username.toLowerCase().trim()}@agrolink.app`;
+
   const handleAuth = async (e) => {
     e.preventDefault();
+    
+    // Special case for Fixed Admin Credentials
+    if (formData.username === 'admin.agrolink@gmail.com' && formData.password === '12345678') {
+      const adminUser = { username: 'Admin', role: 'Admin', _id: 'static_admin_id' };
+      dispatch(loginSuccess(adminUser));
+      navigate('/admin');
+      return;
+    }
+
     if (!role && !isLogin) {
       alert("Please select a role first!");
       return;
@@ -24,22 +41,56 @@ const Auth = () => {
 
     dispatch(loginStart());
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const payload = isLogin ? formData : { ...formData, role };
+      // Logic for regular Firebase users: Use custom email or their actual email if provided
+      const email = formData.username.includes('@') ? formData.username : getEmail(formData.username);
+      let userRes;
+      let finalUser;
+
+      if (isLogin) {
+        // 1. Firebase Login
+        userRes = await signInWithEmailAndPassword(auth, email, formData.password);
+        
+        // 2. Fetch Role from Firestore
+        const userDoc = await getDoc(doc(db, "users", userRes.user.uid));
+        if (userDoc.exists()) {
+          finalUser = { 
+            username: formData.username, 
+            role: userDoc.data().role, 
+            _id: userRes.user.uid 
+          };
+        } else {
+          throw new Error("User profile not found in database");
+        }
+      } else {
+        // 1. Firebase Register
+        userRes = await createUserWithEmailAndPassword(auth, email, formData.password);
+        
+        // 2. Save Role to Firestore
+        finalUser = { 
+          username: formData.username, 
+          role: role, 
+          _id: userRes.user.uid 
+        };
+        await setDoc(doc(db, "users", userRes.user.uid), {
+          username: formData.username,
+          role: role,
+          createdAt: new Date().toISOString()
+        });
+      }
       
-      const response = await axios.post(`http://localhost:5000${endpoint}`, payload);
-      const data = response.data;
-      
-      dispatch(loginSuccess(data.user));
+      dispatch(loginSuccess(finalUser));
       
       // Redirect based on role
-      if (data.user.role === 'Farmer') {
+      if (finalUser.role === 'Farmer') {
         navigate('/dashboard');
       } else {
         navigate('/marketplace');
       }
     } catch (err) {
-      dispatch(loginFailure(err.response?.data?.message || 'Authentication failed'));
+      let msg = 'Authentication failed';
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') msg = 'Invalid username or password';
+      if (err.code === 'auth/email-already-in-use') msg = 'Username already exists';
+      dispatch(loginFailure(msg));
     }
   };
 
@@ -55,7 +106,7 @@ const Auth = () => {
            <Wheat className="w-10 h-10 text-white" />
         </div>
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">AgroLink</h1>
-        <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Digital Marketplace for Bharat</p>
+        <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Powered by Firebase</p>
       </motion.div>
 
       <motion.div 
@@ -116,7 +167,7 @@ const Auth = () => {
                 <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
                 <input 
                   type="text" 
-                  placeholder="Username"
+                  placeholder="Username or Email"
                   className="w-full h-16 bg-gray-50 border border-gray-100 rounded-[24px] pl-14 pr-6 font-bold outline-none focus:ring-4 ring-primary/10 transition-all"
                   value={formData.username}
                   onChange={(e) => setFormData({...formData, username: e.target.value})}
@@ -156,7 +207,7 @@ const Auth = () => {
       </motion.div>
 
       <p className="mt-8 text-gray-400 font-bold text-[10px] uppercase tracking-widest text-center px-10 leading-loose">
-        By continuing you reflect your trust in AgroLink's Digital Ecosystem.
+        Your data is securely saved with Firebase Cloud Infrastructure.
       </p>
     </div>
   );
